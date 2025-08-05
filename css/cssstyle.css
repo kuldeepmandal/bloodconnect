@@ -10,8 +10,6 @@ body {
     line-height: 1.6;
     color: #333;
     background-color: #f8f9fa;
-    /* Added padding to prevent content from being hidden behind the fixed navbar */
-    padding-top: 80px; 
 }
 
 .container {
@@ -24,13 +22,9 @@ body {
 .navbar {
     background-color: #8b0000;
     padding: 1rem 0;
-    /* CORRECTED: Changed to fixed to keep the nav menu from scrolling */
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
-    width: 100%;
     z-index: 1000;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .nav-container {
@@ -84,7 +78,6 @@ body {
 .btn-primary {
     background-color: #8b0000;
     color: white;
-    text-align: center;
 }
 
 .btn-primary:hover {
@@ -274,55 +267,25 @@ body {
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
 }
-
-/* This rule makes the last grid item span across all columns */
-.dashboard-grid > div:last-child {
-    grid-column: 1 / -1;
-}
-
-/* You might want to adjust your responsive design here too */
-@media (max-width: 900px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(2, minmax(300px, 1fr));
-        gap: 20px;
-    }
-}
-@media (max-width: 768px) {
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 
 .dashboard-card {
     background-color: #f8f9fa;
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    align-items: center;
-    /* text-align: center; */
 }
 
 .dashboard-card h3 {
     color: #8b0000;
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
-    text-align: center;
-}
-
-.dashboard-card h1 {
-    color: #8b0000;
-    margin-bottom: 1.5rem;
-    font-size: 2.5rem;
-    text-align: center;
 }
 
 .quick-actions {
     display: flex;
-    flex-direction: column;
     gap: 1rem;
     flex-wrap: wrap;
 }
@@ -392,30 +355,6 @@ body {
     color: #8b0000;
 }
 
-/* ... existing styles ... */
-
-/* Style for the canvas element itself */
-#bloodTypeChart {
-    /* Ensure it behaves as a block element for margin:auto to work */
-    display: block; 
-    /* Center the block element horizontally */
-    margin: 0 auto; 
-    /* You might want to remove the inline style height/width from HTML if this causes issues */
-}
-
-/* You already have .chart-container, ensure it doesn't conflict */
-.chart-container {
-    position: relative; 
-    height: 40vh; 
-    width: 100%;
-    /* If the above doesn't work, you can try text-align here: */
-    /* text-align: center; */ 
-}
-
-/* ... rest of your styles ... */
-
-
-
 /* Modal Styles */
 .modal {
     display: none;
@@ -436,8 +375,6 @@ body {
     width: 80%;
     max-width: 500px;
     position: relative;
-    max-height: 80vh;
-    overflow-y: auto;
 }
 
 .close {
@@ -534,6 +471,7 @@ footer {
 }
 
 .alert-success {
+    /* position: fixed; */
     background-color: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
@@ -567,6 +505,69 @@ footer {
     100% { transform: rotate(360deg); }
 }
 
+
+/* ... existing styles ... */
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    position: relative;
+    /* ADDED STYLES FOR SCROLLING */
+    max-height: 80vh; /* Set a maximum height relative to the viewport */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+/* ... existing styles ... */
+
+
+/* ... (existing styles) ... */
+
+/* Blood Requests Styles */
+/* .request-card {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    border-left: 5px solid;
+}
+
+.request-card h4 {
+    color: #8b0000;
+    margin-bottom: 0.5rem;
+}
+
+.request-card p {
+    margin-bottom: 0.3rem;
+}
+
+.urgency-critical {
+    font-weight: bold;
+    color: #ff0000;
+}
+
+.urgency-urgent {
+    font-weight: bold;
+    color: #ff9900; 
+}
+
+.urgency-normal {
+    font-weight: bold;
+    color: #008000; 
+}
+
+.request-date {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 1rem;
+} */
+
+
+/* ... existing styles ... */
 
 .dashboard-grid {
     display: grid;
@@ -611,6 +612,9 @@ footer {
         grid-template-columns: 1fr; /* Single column for phones */
     }
 }
+
+
+/* ... existing styles ... */
 
 /* Individual Blood Request Card Styles */
 .request-card {
@@ -657,3 +661,4 @@ footer {
     color: #777;
     margin-top: auto;
 }
+

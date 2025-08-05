@@ -8,14 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if user is logged in for protected pages
     checkAuthStatus();
 
-    // Add event listener for logout button (if it exists on the page)
+    // Add event listener for logout button
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault(); // Prevent default link behavior
-
-            // Directly navigate to the logout PHP script
-            // This relies on backend/logout.php performing a header redirect to index.html
+            e.preventDefault();
             window.location.href = 'backend/logout.php';
         });
     }
@@ -34,6 +31,11 @@ function initializePageFunctions() {
             break;
         case 'dashboard.html':
             initializeDashboard();
+            loadDashboardCharts();
+            loadBloodRequests();
+            break;
+        case 'profile.html':
+            initializeProfilePage();
             break;
         case 'search.html':
             initializeSearchPage();
@@ -42,7 +44,6 @@ function initializePageFunctions() {
             initializeRequestForm();
             break;
         default:
-            // Home page or other pages
             break;
     }
 }
@@ -57,7 +58,6 @@ function showAlert(message, type) {
     if (main) {
         main.insertBefore(alert, main.firstChild);
         
-        // Auto-remove alert after 5 seconds
         setTimeout(() => {
             alert.remove();
         }, 5000);
@@ -68,7 +68,7 @@ function showAlert(message, type) {
 function submitForm(form) {
     const formData = new FormData(form);
     
-    fetch(form.action, {
+    return fetch(form.action, {
         method: 'POST',
         body: formData
     })
@@ -79,15 +79,17 @@ function submitForm(form) {
             if (data.redirect) {
                 setTimeout(() => {
                     window.location.href = data.redirect;
-                }, 1500); // Redirect after 1.5 seconds
+                }, 1500);
             }
         } else {
             showAlert(data.message, 'error');
         }
+        return data;
     })
     .catch(error => {
         console.error('Error:', error);
         showAlert('An error occurred. Please try again.', 'error');
+        return { success: false, message: 'An error occurred.' };
     });
 }
 
@@ -101,15 +103,13 @@ function initializeRegisterForm() {
 
 function handleRegisterSubmit(e) {
     e.preventDefault();
-    
     const formData = new FormData(e.target);
     const password = formData.get('password');
     const confirmPassword = formData.get('confirmPassword');
     
-    // Password validation
     if (password !== confirmPassword) {
         showAlert('Passwords do not match.', 'error');
-        return; // Stop execution if passwords don't match
+        return;
     }
 
     if (password.length < 6) {
@@ -117,7 +117,6 @@ function handleRegisterSubmit(e) {
         return;
     }
 
-    // Call the utility function to submit the form via fetch
     submitForm(e.target);
 }
 
@@ -136,31 +135,117 @@ function handleLoginSubmit(e) {
 
 // Dashboard Functions
 function initializeDashboard() {
+    loadBloodRequests();
+    loadDashboardCharts();
+}
+
+// NEW: Function to fetch dashboard data and render charts
+function loadDashboardCharts() {
+    fetch('backend/get_dashboard_data.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.bloodTypeCounts.length > 0) {
+                const labels = data.bloodTypeCounts.map(item => item.blood_type);
+                const counts = data.bloodTypeCounts.map(item => item.count);
+
+                const existingChart = Chart.getChart('bloodTypeChart');
+                if (existingChart) {
+                    existingChart.destroy();
+                }
+
+                const ctx = document.getElementById('bloodTypeChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie', // You can change this to 'bar' for a bar chart
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Available Donors',
+                            data: counts,
+                            backgroundColor: [
+                                '#8b0000', // Dark Red
+                                '#a00000', // Slightly lighter Red
+                                '#b22222', // Firebrick
+                                '#dc143c', // Crimson
+                                '#ff6384', // Pinkish Red
+                                '#ff9999', // Light Red
+                                '#ffb6c1', // Light Pink
+                                '#ffe4e1'  // Misty Rose
+                            ],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: false,
+                                text: 'Available Donors Chart'
+                            }
+                        }
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dashboard charts:', error);
+        });
+}
+
+
+function loadBloodRequests() {
+    const bloodRequestsDiv = document.getElementById('bloodRequests');
+    if (!bloodRequestsDiv) return;
+
+    bloodRequestsDiv.innerHTML = '<p>Loading blood requests...</p>';
+
+    fetch('backend/get_blood_requests.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.requests.length > 0) {
+                bloodRequestsDiv.innerHTML = '';
+                data.requests.forEach(request => {
+                    const requestCard = document.createElement('div');
+                    requestCard.className = 'request-card';
+                    requestCard.innerHTML = `
+                        <h4>Blood Needed: ${request.blood_type}</h4>
+                        <p><strong>Patient:</strong> ${request.patient_name}</p>
+                        <p><strong>Urgency:</strong> <span class="urgency-${request.urgency_level}">${request.urgency_level}</span></p>
+                        <p><strong>Units:</strong> ${request.units_needed}</p>
+                        <p><strong>Hospital:</strong> ${request.hospital_name}, ${request.hospital_address}</p>
+                        <p><strong>Contact:</strong> ${request.contact_person} (${request.contact_phone})</p>
+                        <p class="request-date">Requested On: ${request.request_date}</p>
+                    `;
+                    bloodRequestsDiv.appendChild(requestCard);
+                });
+            } else if (data.success && data.requests.length === 0) {
+                bloodRequestsDiv.innerHTML = '<p>No blood requests have been posted yet.</p>';
+            } else {
+                bloodRequestsDiv.innerHTML = `<p>${data.message || 'Error loading blood requests.'}</p>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading blood requests:', error);
+            bloodRequestsDiv.innerHTML = '<p>Error connecting to server for blood requests.</p>';
+        });
+}
+
+
+// NEW: Function to initialize the new profile page
+function initializeProfilePage() {
     loadUserProfile();
 
-    // Event listener to open the Update Donation Date modal
-    const updateDonationModalBtn = document.getElementById('updateDonationModalBtn');
-    if (updateDonationModalBtn) {
-        updateDonationModalBtn.addEventListener('click', openDonationModal);
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', editProfile);
     }
 
-    // Event listener for the Update Donation Form submission
-    const updateDonationForm = document.getElementById('updateDonationForm');
-    if (updateDonationForm) {
-        updateDonationForm.addEventListener('submit', handleUpdateDonationSubmit);
+    const updateProfileForm = document.getElementById('updateProfileForm');
+    if (updateProfileForm) {
+        updateProfileForm.addEventListener('submit', handleUpdateProfileSubmit);
     }
-
-    // Note: Edit Profile functionality is currently skipped per user request.
-    // The HTML for it is present, but its JS handlers are not fully implemented here.
-    // const editProfileBtn = document.querySelector('.dashboard-card .btn-secondary');
-    // if (editProfileBtn) {
-    //     editProfileBtn.addEventListener('click', editProfile);
-    // }
-
-    // const updateProfileForm = document.getElementById('updateProfileForm');
-    // if (updateProfileForm) {
-    //     updateProfileForm.addEventListener('submit', handleUpdateProfileSubmit);
-    // }
 }
 
 function loadUserProfile() {
@@ -180,10 +265,6 @@ function loadUserProfile() {
                     <p><strong>Address:</strong> ${user.address}</p>
                     <p><strong>Last Donation:</strong> ${user.lastDonationDate ? user.lastDonationDate : 'N/A'}</p>
                 `;
-                // Optionally pre-fill the donation date in the modal if available
-                if (user.lastDonationDate) {
-                    document.getElementById('newLastDonation').value = user.lastDonationDate;
-                }
             } else {
                 userProfileDiv.innerHTML = '<p>Could not load profile data.</p>';
                 showAlert('Failed to load user profile.', 'error');
@@ -195,31 +276,47 @@ function loadUserProfile() {
         });
 }
 
-// Function to open the donation update modal
-function openDonationModal() {
-    openModal('updateDonationModal');
+function editProfile() {
+    fetch('backend/get_user_profile.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.user) {
+                const user = data.user;
+                document.getElementById('editFullName').value = user.fullName;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editPhone').value = user.phone;
+                document.getElementById('editAge').value = user.age;
+                document.getElementById('editBloodType').value = user.bloodType;
+                document.getElementById('editCity').value = user.city;
+                document.getElementById('editAddress').value = user.address;
+                document.getElementById('editLastDonation').value = user.lastDonationDate;
+                openModal('editProfileModal');
+            } else {
+                showAlert('Could not load profile for editing.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading profile for edit:', error);
+            showAlert('Error loading profile data.', 'error');
+        });
 }
 
-// Function to handle the submission of the donation update form
-function handleUpdateDonationSubmit(e) {
+function handleUpdateProfileSubmit(e) {
     e.preventDefault();
     const form = e.target;
     
     submitForm(form)
-    .then(() => {
-        // After submitForm handles the success/error alert, and if successful:
-        closeModal('updateDonationModal'); // Close the modal
-        loadUserProfile(); // Reload profile to show updated donation date
+    .then(data => {
+        if (data.success) {
+            closeModal('editProfileModal');
+            loadUserProfile();
+        }
     })
     .catch(error => {
-        console.error('Error handling donation update submit:', error);
-        showAlert('An error occurred during donation update.', 'error');
+        console.error('Error handling profile update submit:', error);
+        showAlert('An error occurred during profile update.', 'error');
     });
 }
-
-// Placeholder functions for profile update (not implemented yet)
-function editProfile() { /* Not implemented yet */ }
-function handleUpdateProfileSubmit(e) { /* Not implemented yet */ }
 
 
 // Search Page Functions
@@ -235,7 +332,7 @@ function handleSearchFormSubmit(e) {
 
     const formData = new FormData(e.target);
     const searchResultsDiv = document.getElementById('searchResults');
-    showSpinner('searchResults'); // Show spinner while loading
+    showSpinner('searchResults');
 
     fetch('backend/search_donors.php', {
         method: 'POST',
@@ -244,7 +341,7 @@ function handleSearchFormSubmit(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.donors.length > 0) {
-            searchResultsDiv.innerHTML = ''; // Clear previous results
+            searchResultsDiv.innerHTML = '';
             data.donors.forEach(donor => {
                 const donorCard = document.createElement('div');
                 donorCard.className = 'donor-card';
@@ -257,7 +354,6 @@ function handleSearchFormSubmit(e) {
                         <p><strong>Phone:</strong> ${donor.phone}</p>
                         <p><strong>Last Donation:</strong> ${donor.last_donation_date ? donor.last_donation_date : 'N/A'}</p>
                     </div>
-                    <!-- Contact button is removed as per request -->
                 `;
                 searchResultsDiv.appendChild(donorCard);
             });
@@ -289,17 +385,10 @@ function handleRequestSubmit(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
 
-    fetch('backend/request_blood.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
+    submitForm(e.target)
     .then(data => {
         if (data.success) {
-            showAlert(data.message, 'success');
             e.target.reset(); // Clear the form
-        } else {
-            showAlert(data.message, 'error');
         }
     })
     .catch(error => {
@@ -337,34 +426,29 @@ window.onclick = function(event) {
 function showSpinner(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
-        element.innerHTML = '<div class="spinner"></div>'; // You'll need CSS for .spinner
+        element.innerHTML = '<div class="spinner"></div>';
     }
 }
 
 function contactDonor(donorId) {
-    // This function can be expanded to show contact details or send a message
     showAlert('Contact information will be provided after verification. Donor ID: ' + donorId, 'info');
 }
 
 // Authentication Check
 function checkAuthStatus() {
-    // Check if user is logged in for protected pages
-    const protectedPages = ['dashboard.html']; // Add other protected pages here
+    const protectedPages = ['dashboard.html'];
     const currentPage = window.location.pathname.split('/').pop();
     
     if (protectedPages.includes(currentPage)) {
         fetch('backend/check_auth.php')
             .then(response => response.json())
             .then(data => {
-                // As per previous instruction, check_auth.php always returns authenticated: true
-                // If you re-implement actual authentication, this logic would change.
                 if (!data.authenticated) {
-                    window.location.href = 'login.html'; // Redirect to login if not authenticated
+                    window.location.href = 'login.html';
                 }
             })
             .catch(error => {
                 console.error('Auth check error:', error);
-                // Optionally show an error message or redirect even on fetch error
                 window.location.href = 'login.html'; 
             });
     }

@@ -12,9 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $city = trim($_POST['city'] ?? '');
 
     try {
-        // ADD 'phone' to the SELECT clause here
+        // Updated SQL query to include the 56-day donation interval rule
         $sql = "SELECT id, full_name, phone, blood_type, city, address, last_donation_date FROM users WHERE 1=1";
         $params = [];
+
+        // Condition to filter by last donation date (56 days ago or never)
+        $sql .= " AND (last_donation_date IS NULL OR last_donation_date <= DATE_SUB(NOW(), INTERVAL 56 DAY))";
 
         if (!empty($bloodType)) {
             $sql .= " AND blood_type = ?";

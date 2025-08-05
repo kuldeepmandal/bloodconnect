@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="css/BloodDonationLogo.png" type="image/png">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo">
+                    <h1><a href="dashboard.html">BloodConnect</a></h1>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="request.html">Request Blood</a></li>
+                    <li><a href="search.html">Search Donors</a></li>
+                    <li><a href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="form-section">
+            <div class="container">
+                <div class="form-container">
+                    <h2>My Profile</h2>
+                    <div id="userProfile">
+                        <p>Loading profile...</p>
+                    </div>
+                    <button class="btn btn-secondary" id="editProfileBtn">Edit Profile</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editProfileModal')">&times;</span>
+            <h2>Edit Profile</h2>
+            <form id="updateProfileForm" action="backend/update_profile.php" method="POST">
+                <div class="form-group">
+                    <label for="editFullName">Full Name</label>
+                    <input type="text" id="editFullName" name="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">Email Address</label>
+                    <input type="email" id="editEmail" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPhone">Phone Number</label>
+                    <input type="tel" id="editPhone" name="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="editAge">Age</label>
+                    <input type="number" id="editAge" name="age" required min="18" max="65">
+                </div>
+                <div class="form-group">
+                    <label for="editBloodType">Blood Type</label>
+                    <select id="editBloodType" name="bloodType" required>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editCity">City</label>
+                    <input type="text" id="editCity" name="city" required>
+                </div>
+                <div class="form-group">
+                    <label for="editAddress">Address</label>
+                    <textarea id="editAddress" name="address" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editLastDonation">Last Donation Date</label>
+                    <input type="date" id="editLastDonation" name="lastDonationDate">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+            </form>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 BloodConnect. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
